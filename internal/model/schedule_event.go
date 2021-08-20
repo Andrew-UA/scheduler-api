@@ -36,18 +36,19 @@ func (s *ScheduleEvent) Marshal() ([]byte, error) {
 }
 
 func (s *ScheduleEvent) ToScheduleEventJson() *ScheduleEventJson {
+	location, _ := time.LoadLocation("UTC")
 	return &ScheduleEventJson{
 		ScheduleEvent: *s,
-		StartAt:   time.Unix(s.StartAt, 0).Format(layout),
-		CreatedAt: time.Unix(s.CreatedAt, 0).Format(layout),
-		UpdatedAt: time.Unix(s.UpdatedAt, 0).Format(layout),
+		StartAt:   time.Unix(s.StartAt, 0).In(location).Format(layout),
+		CreatedAt: time.Unix(s.CreatedAt, 0).In(location).Format(layout),
+		UpdatedAt: time.Unix(s.UpdatedAt, 0).In(location).Format(layout),
 	}
 }
 
 func (s *ScheduleEvent) FromScheduleEventJson(eventJson ScheduleEventJson) error {
 	s.Time = eventJson.Time
 	s.Name = eventJson.Name
-	t, err := time.Parse(layout, eventJson.StartAt)
+	t, err := time.ParseInLocation(layout, eventJson.StartAt, time.UTC)
 	if err != nil {
 		return err
 	}

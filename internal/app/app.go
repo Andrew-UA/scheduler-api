@@ -36,7 +36,8 @@ func Run() error {
 				UpdatedAt: time.Now().Unix(),
 			},
 		},
-	} // Repo
+	}
+	// Repo
 	scheduleRepo := sl.NewSchedules(db)
 	r := repository.NewRepository(scheduleRepo)
 

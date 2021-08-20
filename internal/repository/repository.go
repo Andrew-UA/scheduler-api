@@ -2,6 +2,8 @@ package repository
 
 import "scheduler/internal/model"
 
+//go:generate mockgen -source=repository.go -destination=mocks/mock.go
+
 type ISchedule interface {
 	List(params map[string]string) ([]model.ScheduleEvent, error)
 	Show(ID int) (model.ScheduleEvent, error)
