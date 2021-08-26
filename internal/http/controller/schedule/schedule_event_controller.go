@@ -28,6 +28,9 @@ func (c Controller) Init(r *router.Router) {
 	r.POST("/schedule-events", c.Create)
 	r.PUT("/schedule-events/{id}", c.Update)
 	r.DELETE("/schedule-events/{id}", c.Delete)
+	r.URLMiddleware("/schedule-events", []string{
+		"auth", "validation",
+	})
 }
 
 func (c Controller) List(w http.ResponseWriter, r *http.Request, p *url.Values) {

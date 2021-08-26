@@ -12,12 +12,18 @@ type IScheduleService interface {
 	Delete(ID int) error
 }
 
-type Service struct {
-	Schedule IScheduleService
+type IAuthService interface {
+	SignIn(login, password string) (string, error)
 }
 
-func NewService(schedule IScheduleService) *Service {
+type Service struct {
+	Schedule IScheduleService
+	Auth 	 IAuthService
+}
+
+func NewService(schedule IScheduleService, auth IAuthService) *Service {
 	return &Service{
 		Schedule: schedule,
+		Auth: auth,
 	}
 }

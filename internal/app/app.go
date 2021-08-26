@@ -1,14 +1,18 @@
 package app
 
 import (
-	"scheduler/internal/http"
-	httpSchedule "scheduler/internal/http/schedule"
+	"scheduler/internal/http/controller"
+	auth2 "scheduler/internal/http/controller/auth"
+	"scheduler/internal/http/controller/schedule"
+	"scheduler/internal/http/controller/user"
 	"scheduler/internal/model"
 	"scheduler/internal/repository"
 	"scheduler/internal/repository/sl"
 	"scheduler/internal/server"
 	"scheduler/internal/service"
+	serviceAuth "scheduler/internal/service/auth"
 	serviceSchedule "scheduler/internal/service/schedule"
+	"scheduler/pkg/auth"
 	"scheduler/pkg/router"
 	"time"
 )
@@ -16,6 +20,7 @@ import (
 func Run() error {
 	// Dependency injection
 	// DB
+	pass, _ := auth.NewPasswordManager().HashAndSalt("password")
 	var db = &sl.DB{
 		ScheduleIncrement: 2,
 		Schedules: []model.ScheduleEvent{
@@ -36,19 +41,30 @@ func Run() error {
 				UpdatedAt: time.Now().Unix(),
 			},
 		},
+		Users: []model.User{
+			{
+				ID: 1,
+				Login: "Andrew",
+				Password: pass,
+			},
+		},
 	}
 	// Repo
 	scheduleRepo := sl.NewSchedules(db)
-	r := repository.NewRepository(scheduleRepo)
+	userRepo := sl.NewUsers(db)
+	r := repository.NewRepository(scheduleRepo, userRepo)
 
 	// Service
 	scheduleService := serviceSchedule.NewService(r.Schedule)
-	s := service.NewService(scheduleService)
+	authService := serviceAuth.NewJwtService(userRepo)
+	s := service.NewService(scheduleService, authService)
 
 	// Controller
-	c := http.NewController(
+	c := controller.NewController(
 		router.NewRouter(),
-		httpSchedule.NewController(s.Schedule),
+		schedule.NewController(s.Schedule),
+		user.NewController(),
+		auth2.NewController(s.Auth),
 	)
 	c.Init()
 

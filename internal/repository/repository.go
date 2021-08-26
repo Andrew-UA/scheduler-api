@@ -12,12 +12,18 @@ type ISchedule interface {
 	Delete(ID int) error
 }
 
-type Repository struct {
-	Schedule ISchedule
+type IUser interface {
+	FindByLogin(login string) (model.User, error)
 }
 
-func NewRepository(schedule ISchedule) *Repository {
+type Repository struct {
+	Schedule ISchedule
+	User     IUser
+}
+
+func NewRepository(schedule ISchedule, user IUser) *Repository {
 	return &Repository{
 		Schedule: schedule,
+		User:     user,
 	}
 }

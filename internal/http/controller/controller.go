@@ -1,8 +1,9 @@
-package http
+package controller
 
 import (
 	"net/http"
 	"net/url"
+	"scheduler/internal/http/middleware"
 	"scheduler/pkg/router"
 	"strings"
 )
@@ -16,18 +17,36 @@ type ISchedulerController interface {
 	Init(r *router.Router)
 }
 
+type IUserController interface {
+	Update(w http.ResponseWriter, r *http.Request, p *url.Values)
+	Init(r *router.Router)
+}
+
+type IAuthController interface {
+	Login(w http.ResponseWriter, r *http.Request, p *url.Values)
+	Init(r *router.Router)
+}
+
 type Controller struct {
 	Router                  *router.Router
 	ScheduleEventController ISchedulerController
+	UserController          IUserController
+	AuthController          IAuthController
 }
 
-func NewController(router *router.Router, scheduleController ISchedulerController) *Controller {
+func NewController(
+	router *router.Router,
+	scheduleController ISchedulerController,
+	userController IUserController,
+	authController IAuthController,
+) *Controller {
 	return &Controller{
-		Router: router,
+		Router:                  router,
 		ScheduleEventController: scheduleController,
+		UserController:          userController,
+		AuthController:          authController,
 	}
 }
-
 
 func (c Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handleMethod, err := c.Router.GetHandleFunctionByRoute(strings.ToUpper(r.Method), r.RequestURI)
@@ -41,5 +60,7 @@ func (c Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) Init() {
+	c.Router.RegisterMiddle(middleware.GetList())
 	c.ScheduleEventController.Init(c.Router)
+	c.AuthController.Init(c.Router)
 }

@@ -47,9 +47,7 @@ func TestService_Show(t *testing.T) {
 		// Assert
 		assert.Equal(t, test.scheduleEvent, result)
 		assert.Nil(t, err)
-
 	}
-
 }
 
 func TestService_List(t *testing.T) {
@@ -223,13 +221,13 @@ func TestService_Delete(t *testing.T) {
 	type mockBehavior func(s *mock_repository.MockISchedule, ID int)
 
 	testTable := []struct {
-		name                string
-		inputId				int
-		mockBehavior        mockBehavior
-		params              map[string]string
+		name         string
+		inputId      int
+		mockBehavior mockBehavior
+		params       map[string]string
 	}{
 		{
-			name: "OK",
+			name:    "OK",
 			inputId: 1,
 			mockBehavior: func(s *mock_repository.MockISchedule, ID int) {
 				s.EXPECT().
