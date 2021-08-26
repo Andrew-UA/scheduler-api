@@ -60,7 +60,7 @@ func (c Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) Init() {
-	c.Router.RegisterMiddle(middleware.GetList())
+	c.Router.RegisterMiddleware(middleware.GetList())
 	c.ScheduleEventController.Init(c.Router)
 	c.AuthController.Init(c.Router)
 }

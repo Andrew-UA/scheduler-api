@@ -74,7 +74,7 @@ func (r *Router) URLMiddleware(url string, middleware []string) {
 	r.urlMiddleware[url] = middleware
 }
 
-func (r *Router) RegisterMiddle(middleware map[string]MiddlewareFunction) {
+func (r *Router) RegisterMiddleware(middleware map[string]MiddlewareFunction) {
 	r.middleware = middleware
 }
 
