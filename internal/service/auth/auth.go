@@ -36,7 +36,7 @@ func (s *JwtService) SignIn(login, password string) (string, error) {
 		return "", errors.New("INCORRECT LOGIN OR PASSWORD")
 	}
 
-	token, tErr := s.tokeManager.NewJWT(strconv.Itoa(user.ID), time.Minute*5)
+	token, tErr := s.tokeManager.NewJWT(strconv.Itoa(user.ID), time.Minute*60)
 	if tErr != nil {
 		return "", tErr
 	}

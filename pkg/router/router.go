@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const AuthorizedUserId = "AuthUserID"
+const AuthorizedUserId = "authUserID"
 
 type RouteError struct {
 	Err string

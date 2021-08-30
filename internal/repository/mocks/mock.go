@@ -5,6 +5,7 @@
 package mock_repository
 
 import (
+	context "context"
 	reflect "reflect"
 	model "scheduler/internal/model"
 
@@ -35,75 +36,113 @@ func (m *MockISchedule) EXPECT() *MockIScheduleMockRecorder {
 }
 
 // Create mocks base method.
-func (m_2 *MockISchedule) Create(m model.ScheduleEvent) (model.ScheduleEvent, error) {
+func (m_2 *MockISchedule) Create(ctx context.Context, m model.ScheduleEvent) (model.ScheduleEvent, error) {
 	m_2.ctrl.T.Helper()
-	ret := m_2.ctrl.Call(m_2, "Create", m)
+	ret := m_2.ctrl.Call(m_2, "Create", ctx, m)
 	ret0, _ := ret[0].(model.ScheduleEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockIScheduleMockRecorder) Create(m interface{}) *gomock.Call {
+func (mr *MockIScheduleMockRecorder) Create(ctx, m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockISchedule)(nil).Create), m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockISchedule)(nil).Create), ctx, m)
 }
 
 // Delete mocks base method.
-func (m *MockISchedule) Delete(ID int) error {
+func (m *MockISchedule) Delete(ctx context.Context, ID int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ID)
+	ret := m.ctrl.Call(m, "Delete", ctx, ID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockIScheduleMockRecorder) Delete(ID interface{}) *gomock.Call {
+func (mr *MockIScheduleMockRecorder) Delete(ctx, ID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockISchedule)(nil).Delete), ID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockISchedule)(nil).Delete), ctx, ID)
 }
 
 // List mocks base method.
-func (m *MockISchedule) List(params map[string]string) ([]model.ScheduleEvent, error) {
+func (m *MockISchedule) List(ctx context.Context, params map[string]string) ([]model.ScheduleEvent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", params)
+	ret := m.ctrl.Call(m, "List", ctx, params)
 	ret0, _ := ret[0].([]model.ScheduleEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockIScheduleMockRecorder) List(params interface{}) *gomock.Call {
+func (mr *MockIScheduleMockRecorder) List(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockISchedule)(nil).List), params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockISchedule)(nil).List), ctx, params)
 }
 
 // Show mocks base method.
-func (m *MockISchedule) Show(ID int) (model.ScheduleEvent, error) {
+func (m *MockISchedule) Show(ctx context.Context, D int) (model.ScheduleEvent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Show", ID)
+	ret := m.ctrl.Call(m, "Show", ctx, D)
 	ret0, _ := ret[0].(model.ScheduleEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Show indicates an expected call of Show.
-func (mr *MockIScheduleMockRecorder) Show(ID interface{}) *gomock.Call {
+func (mr *MockIScheduleMockRecorder) Show(ctx, D interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Show", reflect.TypeOf((*MockISchedule)(nil).Show), ID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Show", reflect.TypeOf((*MockISchedule)(nil).Show), ctx, D)
 }
 
 // Update mocks base method.
-func (m_2 *MockISchedule) Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+func (m_2 *MockISchedule) Update(ctx context.Context, ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
 	m_2.ctrl.T.Helper()
-	ret := m_2.ctrl.Call(m_2, "Update", ID, m)
+	ret := m_2.ctrl.Call(m_2, "Update", ctx, ID, m)
 	ret0, _ := ret[0].(model.ScheduleEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockIScheduleMockRecorder) Update(ID, m interface{}) *gomock.Call {
+func (mr *MockIScheduleMockRecorder) Update(ctx, ID, m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockISchedule)(nil).Update), ID, m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockISchedule)(nil).Update), ctx, ID, m)
+}
+
+// MockIUser is a mock of IUser interface.
+type MockIUser struct {
+	ctrl     *gomock.Controller
+	recorder *MockIUserMockRecorder
+}
+
+// MockIUserMockRecorder is the mock recorder for MockIUser.
+type MockIUserMockRecorder struct {
+	mock *MockIUser
+}
+
+// NewMockIUser creates a new mock instance.
+func NewMockIUser(ctrl *gomock.Controller) *MockIUser {
+	mock := &MockIUser{ctrl: ctrl}
+	mock.recorder = &MockIUserMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIUser) EXPECT() *MockIUserMockRecorder {
+	return m.recorder
+}
+
+// FindByLogin mocks base method.
+func (m *MockIUser) FindByLogin(login string) (model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByLogin", login)
+	ret0, _ := ret[0].(model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByLogin indicates an expected call of FindByLogin.
+func (mr *MockIUserMockRecorder) FindByLogin(login interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByLogin", reflect.TypeOf((*MockIUser)(nil).FindByLogin), login)
 }

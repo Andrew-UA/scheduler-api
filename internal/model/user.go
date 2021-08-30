@@ -5,5 +5,5 @@ type User struct {
 	Login    string `json:"login"`
 	Password string `json:"-"`
 	Timezone string `json:"timezone"`
-	Token   string  `json:"-"`
+	Token    string `json:"-"`
 }

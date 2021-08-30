@@ -2,7 +2,7 @@ package app
 
 import (
 	"scheduler/internal/http/controller"
-	auth2 "scheduler/internal/http/controller/auth"
+	controllerauth "scheduler/internal/http/controller/auth"
 	"scheduler/internal/http/controller/schedule"
 	"scheduler/internal/http/controller/user"
 	"scheduler/internal/model"
@@ -12,6 +12,7 @@ import (
 	"scheduler/internal/service"
 	serviceAuth "scheduler/internal/service/auth"
 	serviceSchedule "scheduler/internal/service/schedule"
+	serviceUser "scheduler/internal/service/user"
 	"scheduler/pkg/auth"
 	"scheduler/pkg/router"
 	"time"
@@ -26,6 +27,7 @@ func Run() error {
 		Schedules: []model.ScheduleEvent{
 			{
 				ID:        1,
+				UserID:    2,
 				Name:      "First",
 				Time:      160,
 				StartAt:   time.Now().Add(24 * time.Hour).Unix(),
@@ -34,6 +36,7 @@ func Run() error {
 			},
 			{
 				ID:        2,
+				UserID:    1,
 				Name:      "Second",
 				Time:      160,
 				StartAt:   time.Now().Add(48 * time.Hour).Unix(),
@@ -46,6 +49,7 @@ func Run() error {
 				ID: 1,
 				Login: "Andrew",
 				Password: pass,
+				Timezone: "Europe/Kiev",
 			},
 		},
 	}
@@ -57,14 +61,15 @@ func Run() error {
 	// Service
 	scheduleService := serviceSchedule.NewService(r.Schedule)
 	authService := serviceAuth.NewJwtService(userRepo)
-	s := service.NewService(scheduleService, authService)
+	userService := serviceUser.NewService(r.User)
+	s := service.NewService(scheduleService, authService, userService)
 
 	// Controller
 	c := controller.NewController(
 		router.NewRouter(),
-		schedule.NewController(s.Schedule),
-		user.NewController(),
-		auth2.NewController(s.Auth),
+		schedule.NewController(s.Schedule, s.User),
+		user.NewController(userService),
+		controllerauth.NewController(s.Auth),
 	)
 	c.Init()
 

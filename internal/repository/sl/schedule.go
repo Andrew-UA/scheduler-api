@@ -1,6 +1,7 @@
 package sl
 
 import (
+	"context"
 	"errors"
 	"github.com/jinzhu/now"
 	"scheduler/internal/model"
@@ -29,8 +30,14 @@ func NewSchedules(db *DB) *Schedules {
 	}
 }
 
-func (s *Schedules) List(params map[string]string) ([]model.ScheduleEvent, error) {
-	schedules := s.DB.Schedules
+func (s *Schedules) List(ctx context.Context, params map[string]string) ([]model.ScheduleEvent, error) {
+	schedules := make([]model.ScheduleEvent, 0, len(s.DB.Schedules))
+	for _, schedule := range s.DB.Schedules {
+		if schedule.UserID == ctx.Value("authUserID"){
+			schedules = append(schedules, schedule)
+		}
+	}
+
 	interval, isExists := params["interval"]
 	if isExists {
 		from, to, err := getIntervalDates(interval)
@@ -47,8 +54,15 @@ func (s *Schedules) List(params map[string]string) ([]model.ScheduleEvent, error
 
 	return schedules, nil
 }
-func (s *Schedules) Show(ID int) (model.ScheduleEvent, error)  {
-	for _, scheduleEvent := range s.DB.Schedules {
+func (s *Schedules) Show(ctx context.Context, ID int) (model.ScheduleEvent, error)  {
+	schedules := make([]model.ScheduleEvent, 0, len(s.DB.Schedules))
+	for _, schedule := range s.DB.Schedules {
+		if schedule.UserID == ctx.Value("authUserID") {
+			schedules = append(schedules, schedule)
+		}
+	}
+
+	for _, scheduleEvent := range schedules {
 		if scheduleEvent.ID == ID {
 			return scheduleEvent, nil
 		}
@@ -57,15 +71,17 @@ func (s *Schedules) Show(ID int) (model.ScheduleEvent, error)  {
 	return model.ScheduleEvent{}, errors.New("NOT FOUND")
 }
 
-func (s *Schedules) Create(m model.ScheduleEvent) (model.ScheduleEvent, error) {
+func (s *Schedules) Create(ctx context.Context, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+
 	s.DB.ScheduleIncrement++
 	m.ID = s.DB.ScheduleIncrement
+	m.UserID = (ctx.Value("authUserID")).(int)
 	m.CreatedAt = time.Now().Unix()
 	m.UpdatedAt = time.Now().Unix()
 	s.DB.Schedules = append(s.DB.Schedules, m)
 	return m, nil
 }
-func (s *Schedules) Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+func (s *Schedules) Update(ctx context.Context, ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
 	for key, scheduleEvent := range s.DB.Schedules {
 		if scheduleEvent.ID == ID {
 			beforeUpdate := scheduleEvent
@@ -83,7 +99,7 @@ func (s *Schedules) Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, 
 
 	return model.ScheduleEvent{}, errors.New("NOT FOUND")
 }
-func (s *Schedules) Delete(ID int) error {
+func (s *Schedules) Delete(ctx context.Context, ID int) error {
 	for key, scheduleEvent := range s.DB.Schedules {
 		if scheduleEvent.ID == ID {
 			l := len(s.DB.Schedules)

@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"context"
 	"scheduler/internal/model"
 	"scheduler/internal/repository"
 )
@@ -15,18 +16,18 @@ func NewService(repo repository.ISchedule) *Service {
 	}
 }
 
-func (s Service) List(params map[string]string) ([]model.ScheduleEvent, error) {
-	return s.Repo.List(params)
+func (s Service) List(ctx context.Context, params map[string]string) ([]model.ScheduleEvent, error) {
+	return s.Repo.List(ctx, params)
 }
-func (s Service) Show(ID int) (model.ScheduleEvent, error) {
-	return s.Repo.Show(ID)
+func (s Service) Show(ctx context.Context, ID int) (model.ScheduleEvent, error) {
+	return s.Repo.Show(ctx, ID)
 }
-func (s Service) Create(m model.ScheduleEvent) (model.ScheduleEvent, error) {
-	return s.Repo.Create(m)
+func (s Service) Create(ctx context.Context, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+	return s.Repo.Create(ctx, m)
 }
-func (s Service) Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
-	return s.Repo.Update(ID, m)
+func (s Service) Update(ctx context.Context, ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+	return s.Repo.Update(ctx, ID, m)
 }
-func (s Service) Delete(ID int) error {
-	return s.Repo.Delete(ID)
+func (s Service) Delete(ctx context.Context, ID int) error {
+	return s.Repo.Delete(ctx, ID)
 }

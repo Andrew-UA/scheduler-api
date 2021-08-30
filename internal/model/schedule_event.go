@@ -9,8 +9,10 @@ const (
 	layout = "01/02/06 15:04:05"
 )
 
+//
 type ScheduleEvent struct {
 	ID        int    `json:"id"`
+	UserID    int	 `json:"user_id"`
 	Name      string `json:"name"`
 	Time      int    `json:"time"`
 	StartAt   int64  `json:"start_at"`
@@ -25,8 +27,11 @@ type ScheduleEventJson struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-func (s *ScheduleEvent) Marshal() ([]byte, error) {
-	scheduleJson := s.ToScheduleEventJson()
+func (s *ScheduleEvent) Marshal(timezone string) ([]byte, error) {
+	scheduleJson, err := s.ToScheduleEventJson(timezone)
+	if err != nil {
+		return nil, err
+	}
 	jsonString, err := json.Marshal(scheduleJson)
 	if err != nil {
 		return nil, err
@@ -35,20 +40,27 @@ func (s *ScheduleEvent) Marshal() ([]byte, error) {
 	return jsonString, nil
 }
 
-func (s *ScheduleEvent) ToScheduleEventJson() *ScheduleEventJson {
-	location, _ := time.LoadLocation("UTC")
+func (s *ScheduleEvent) ToScheduleEventJson(timezone string) (*ScheduleEventJson, error) {
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		return nil, err
+	}
 	return &ScheduleEventJson{
 		ScheduleEvent: *s,
 		StartAt:   time.Unix(s.StartAt, 0).In(location).Format(layout),
 		CreatedAt: time.Unix(s.CreatedAt, 0).In(location).Format(layout),
 		UpdatedAt: time.Unix(s.UpdatedAt, 0).In(location).Format(layout),
-	}
+	}, nil
 }
 
-func (s *ScheduleEvent) FromScheduleEventJson(eventJson ScheduleEventJson) error {
+func (s *ScheduleEvent) FromScheduleEventJson(eventJson ScheduleEventJson, timezone string) error {
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		return err
+	}
 	s.Time = eventJson.Time
 	s.Name = eventJson.Name
-	t, err := time.ParseInLocation(layout, eventJson.StartAt, time.UTC)
+	t, err := time.ParseInLocation(layout, eventJson.StartAt, location)
 	if err != nil {
 		return err
 	}

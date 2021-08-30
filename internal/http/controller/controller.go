@@ -63,4 +63,5 @@ func (c *Controller) Init() {
 	c.Router.RegisterMiddleware(middleware.GetList())
 	c.ScheduleEventController.Init(c.Router)
 	c.AuthController.Init(c.Router)
+	c.UserController.Init(c.Router)
 }
