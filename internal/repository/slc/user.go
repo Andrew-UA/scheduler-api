@@ -1,4 +1,4 @@
-package sl
+package slc
 
 import (
 	"errors"

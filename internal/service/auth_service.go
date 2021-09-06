@@ -1,9 +1,10 @@
-package auth
+package service
 
 import (
 	"errors"
 	"scheduler/internal/repository"
 	"scheduler/pkg/auth"
+	"scheduler/pkg/logger"
 	"strconv"
 	"time"
 )
@@ -16,13 +17,15 @@ type JwtService struct {
 	Repo            repository.IUser
 	passwordManager auth.IPasswordManager
 	tokeManager     auth.TokenManager
+	Logger          logger.Logger
 }
 
-func NewJwtService(repo repository.IUser) *JwtService {
+func NewJwtService(repo repository.IUser, logger logger.Logger) *JwtService {
 	return &JwtService{
 		Repo:            repo,
 		passwordManager: auth.NewPasswordManager(),
 		tokeManager:     auth.NewTokenManager(""),
+		Logger:          logger,
 	}
 }
 

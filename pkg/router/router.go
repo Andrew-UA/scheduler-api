@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-const AuthorizedUserId = "authUserID"
-
 type RouteError struct {
 	Err string
 }
@@ -149,7 +147,6 @@ func (r *Router) findHandlerAndParseURL(routes map[string]HandleFunction, urlStr
 					paramValue := splitUrl[i]
 
 					urlValues.Set(paramName, paramValue)
-					urlValues.Del(AuthorizedUserId)
 				}
 			}
 

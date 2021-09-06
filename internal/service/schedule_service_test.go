@@ -1,4 +1,4 @@
-package schedule
+package service
 
 import (
 	"github.com/golang/mock/gomock"
@@ -39,7 +39,7 @@ func TestService_Show(t *testing.T) {
 
 		repo := mock_repository.NewMockISchedule(c)
 		test.mockBehavior(repo, test.scheduleEvent, test.scheduleEvent.ID)
-		service := NewService(repo)
+		service := service2.NewScheduleService(repo)
 
 		// Test
 		result, err := service.Show(test.scheduleEvent.ID)
@@ -93,7 +93,7 @@ func TestService_List(t *testing.T) {
 
 		repo := mock_repository.NewMockISchedule(c)
 		test.mockBehavior(repo, test.scheduleEvents, test.params)
-		service := NewService(repo)
+		service := service2.NewScheduleService(repo)
 
 		// Test
 		result, err := service.List(test.params)
@@ -146,7 +146,7 @@ func TestService_Create(t *testing.T) {
 
 		repo := mock_repository.NewMockISchedule(c)
 		test.mockBehavior(repo, test.inputScheduleEvent, test.outputScheduleEvent)
-		service := NewService(repo)
+		service := service2.NewScheduleService(repo)
 
 		// Test
 		result, err := service.Create(test.inputScheduleEvent)
@@ -206,7 +206,7 @@ func TestService_Update(t *testing.T) {
 
 		repo := mock_repository.NewMockISchedule(c)
 		test.mockBehavior(repo, test.outputScheduleEvent.ID, test.inputScheduleEvent, test.outputScheduleEvent)
-		service := NewService(repo)
+		service := service2.NewScheduleService(repo)
 
 		// Test
 		result, err := service.Update(test.outputScheduleEvent.ID, test.inputScheduleEvent)
@@ -245,7 +245,7 @@ func TestService_Delete(t *testing.T) {
 
 		repo := mock_repository.NewMockISchedule(c)
 		test.mockBehavior(repo, test.inputId)
-		service := NewService(repo)
+		service := service2.NewScheduleService(repo)
 
 		// Test
 		err := service.Delete(test.inputId)

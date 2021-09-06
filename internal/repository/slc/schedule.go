@@ -1,20 +1,20 @@
-package sl
+package slc
 
 import (
-	"context"
 	"errors"
 	"github.com/jinzhu/now"
 	"scheduler/internal/model"
+	"strconv"
 	"time"
 )
 
 const (
-	param_interval_day = "day"
-	param_interval_week = "week"
+	param_interval_day   = "day"
+	param_interval_week  = "week"
 	param_interval_month = "month"
 )
 
-var param_intervals = [3]string {
+var param_intervals = [3]string{
 	param_interval_day,
 	param_interval_week,
 	param_interval_month,
@@ -30,12 +30,19 @@ func NewSchedules(db *DB) *Schedules {
 	}
 }
 
-func (s *Schedules) List(ctx context.Context, params map[string]string) ([]model.ScheduleEvent, error) {
-	schedules := make([]model.ScheduleEvent, 0, len(s.DB.Schedules))
-	for _, schedule := range s.DB.Schedules {
-		if schedule.UserID == ctx.Value("authUserID"){
-			schedules = append(schedules, schedule)
+func (s *Schedules) List(params map[string]string) ([]model.ScheduleEvent, error) {
+	schedules := s.DB.Schedules
+
+	userId, isExists := params["user_id"]
+	userIdInt, err := strconv.Atoi(userId)
+	if isExists && err == nil {
+		newSchedules := make([]model.ScheduleEvent, 0, len(schedules))
+		for _, schedule := range schedules {
+			if schedule.UserID == userIdInt {
+				newSchedules = append(newSchedules, schedule)
+			}
 		}
+		schedules = newSchedules
 	}
 
 	interval, isExists := params["interval"]
@@ -54,15 +61,9 @@ func (s *Schedules) List(ctx context.Context, params map[string]string) ([]model
 
 	return schedules, nil
 }
-func (s *Schedules) Show(ctx context.Context, ID int) (model.ScheduleEvent, error)  {
-	schedules := make([]model.ScheduleEvent, 0, len(s.DB.Schedules))
-	for _, schedule := range s.DB.Schedules {
-		if schedule.UserID == ctx.Value("authUserID") {
-			schedules = append(schedules, schedule)
-		}
-	}
 
-	for _, scheduleEvent := range schedules {
+func (s *Schedules) Show(ID int) (model.ScheduleEvent, error) {
+	for _, scheduleEvent := range s.DB.Schedules {
 		if scheduleEvent.ID == ID {
 			return scheduleEvent, nil
 		}
@@ -71,17 +72,17 @@ func (s *Schedules) Show(ctx context.Context, ID int) (model.ScheduleEvent, erro
 	return model.ScheduleEvent{}, errors.New("NOT FOUND")
 }
 
-func (s *Schedules) Create(ctx context.Context, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+func (s *Schedules) Create(m model.ScheduleEvent) (model.ScheduleEvent, error) {
 
 	s.DB.ScheduleIncrement++
 	m.ID = s.DB.ScheduleIncrement
-	m.UserID = (ctx.Value("authUserID")).(int)
 	m.CreatedAt = time.Now().Unix()
 	m.UpdatedAt = time.Now().Unix()
 	s.DB.Schedules = append(s.DB.Schedules, m)
 	return m, nil
 }
-func (s *Schedules) Update(ctx context.Context, ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
+
+func (s *Schedules) Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, error) {
 	for key, scheduleEvent := range s.DB.Schedules {
 		if scheduleEvent.ID == ID {
 			beforeUpdate := scheduleEvent
@@ -99,7 +100,8 @@ func (s *Schedules) Update(ctx context.Context, ID int, m model.ScheduleEvent) (
 
 	return model.ScheduleEvent{}, errors.New("NOT FOUND")
 }
-func (s *Schedules) Delete(ctx context.Context, ID int) error {
+
+func (s *Schedules) Delete(ID int) error {
 	for key, scheduleEvent := range s.DB.Schedules {
 		if scheduleEvent.ID == ID {
 			l := len(s.DB.Schedules)
@@ -122,6 +124,6 @@ func getIntervalDates(interval string) (from, to int64, err error) {
 	case param_interval_month:
 		return now.BeginningOfMonth().Unix(), now.EndOfMonth().Unix(), nil
 	default:
-		return 0,0, errors.New("INVALID INTERVAL")
+		return 0, 0, errors.New("INVALID INTERVAL")
 	}
 }

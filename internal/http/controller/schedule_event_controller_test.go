@@ -1,4 +1,4 @@
-package schedule
+package controller
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
-	"scheduler/internal/http/controller"
 	"scheduler/internal/model"
 	mock_service "scheduler/internal/service/mocks"
 	"scheduler/pkg/router"
@@ -67,9 +66,9 @@ func TestController_Show(t *testing.T) {
 
 			service := mock_service.NewMockIScheduleService(c)
 			test.mockBehavior(service, test.scheduleEvent)
-			controller := controller.NewController(
+			controller := NewController(
 				router.NewRouter(),
-				NewController(service),
+				NewScheduleController(service),
 				nil,
 				nil,
 			)
@@ -159,7 +158,7 @@ func TestController_List(t *testing.T) {
 			expectedStatusCode:        200,
 			expectScheduleEventsCount: 1,
 			url:                       "/schedule-events?interval=day",
-			params:                    map[string]string{
+			params: map[string]string{
 				"interval": "day",
 			},
 		},
@@ -172,9 +171,9 @@ func TestController_List(t *testing.T) {
 
 		service := mock_service.NewMockIScheduleService(c)
 		test.mockBehavior(service, test.scheduleEvents, test.params)
-		controller := controller.NewController(
+		controller := NewController(
 			router.NewRouter(),
-			NewController(service),
+			NewScheduleController(service),
 			nil,
 			nil,
 		)
@@ -234,9 +233,9 @@ func TestController_Create(t *testing.T) {
 
 			service := mock_service.NewMockIScheduleService(c)
 			test.mockBehavior(service, test.scheduleEvent)
-			controller := controller.NewController(
+			controller := NewController(
 				router.NewRouter(),
-				NewController(service),
+				NewScheduleController(service),
 				nil,
 				nil,
 			)
@@ -313,9 +312,9 @@ func TestController_Update(t *testing.T) {
 
 			service := mock_service.NewMockIScheduleService(c)
 			test.mockBehavior(service, test.outputScheduleEvent.ID, test.inputScheduleEvent, test.outputScheduleEvent)
-			controller := controller.NewController(
+			controller := NewController(
 				router.NewRouter(),
-				NewController(service),
+				NewScheduleController(service),
 				nil,
 				nil,
 			)
@@ -372,9 +371,9 @@ func TestController_Delete(t *testing.T) {
 
 			service := mock_service.NewMockIScheduleService(c)
 			test.mockBehavior(service, 1)
-			controller := controller.NewController(
+			controller := NewController(
 				router.NewRouter(),
-				NewController(service),
+				NewScheduleController(service),
 				nil,
 				nil,
 			)

@@ -12,7 +12,7 @@ const (
 //
 type ScheduleEvent struct {
 	ID        int    `json:"id"`
-	UserID    int	 `json:"user_id"`
+	UserID    int    `json:"user_id"`
 	Name      string `json:"name"`
 	Time      int    `json:"time"`
 	StartAt   int64  `json:"start_at"`
@@ -47,9 +47,9 @@ func (s *ScheduleEvent) ToScheduleEventJson(timezone string) (*ScheduleEventJson
 	}
 	return &ScheduleEventJson{
 		ScheduleEvent: *s,
-		StartAt:   time.Unix(s.StartAt, 0).In(location).Format(layout),
-		CreatedAt: time.Unix(s.CreatedAt, 0).In(location).Format(layout),
-		UpdatedAt: time.Unix(s.UpdatedAt, 0).In(location).Format(layout),
+		StartAt:       time.Unix(s.StartAt, 0).In(location).Format(layout),
+		CreatedAt:     time.Unix(s.CreatedAt, 0).In(location).Format(layout),
+		UpdatedAt:     time.Unix(s.UpdatedAt, 0).In(location).Format(layout),
 	}, nil
 }
 

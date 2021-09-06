@@ -1,18 +1,17 @@
 package repository
 
 import (
-	"context"
 	"scheduler/internal/model"
 )
 
 //go:generate mockgen -source=repository.go -destination=mocks/mock.go
 
 type ISchedule interface {
-	List(ctx context.Context, params map[string]string) ([]model.ScheduleEvent, error)
-	Show(ctx context.Context, D int) (model.ScheduleEvent, error)
-	Create(ctx context.Context, m model.ScheduleEvent) (model.ScheduleEvent, error)
-	Update(ctx context.Context, ID int, m model.ScheduleEvent) (model.ScheduleEvent, error)
-	Delete(ctx context.Context, ID int) error
+	List(params map[string]string) ([]model.ScheduleEvent, error)
+	Show(D int) (model.ScheduleEvent, error)
+	Create(m model.ScheduleEvent) (model.ScheduleEvent, error)
+	Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, error)
+	Delete(ID int) error
 }
 
 type IUser interface {

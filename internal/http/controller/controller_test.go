@@ -5,7 +5,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
-	schedule2 "scheduler/internal/http/controller/schedule"
 	mock_service "scheduler/internal/service/mocks"
 	"scheduler/pkg/router"
 	"testing"
@@ -33,7 +32,7 @@ func TestController_BedURL(t *testing.T) {
 			service := mock_service.NewMockIScheduleService(c)
 			controller := NewController(
 				router.NewRouter(),
-				schedule2.NewController(service),
+				NewScheduleController(service),
 				nil,
 				nil,
 			)

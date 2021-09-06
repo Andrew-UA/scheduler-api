@@ -1,12 +1,11 @@
-package auth
+package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"scheduler/internal/service"
-	"scheduler/pkg/router"
+	"scheduler/pkg/logger"
 )
 
 type InputBody struct {
@@ -14,22 +13,20 @@ type InputBody struct {
 	Password string `json:"password"`
 }
 
-type Controller struct {
+type AuthController struct {
 	Service service.IAuthService
+	Logger  logger.Logger
 }
 
-func NewController(s service.IAuthService) *Controller {
-	return &Controller{
+func NewAuthController(s service.IAuthService, logger logger.Logger) *AuthController {
+	return &AuthController{
 		Service: s,
+		Logger:  logger,
 	}
 }
 
-func (c Controller) Init(r *router.Router) {
-	r.POST("/login", c.Login)
-}
-
-func (c *Controller) Login(w http.ResponseWriter, r *http.Request, p *url.Values) {
-	fmt.Println("AuthController:Login")
+func (c *AuthController) Login(w http.ResponseWriter, r *http.Request, p *url.Values) {
+	c.Logger.Debugf("AuthController:Login")
 	input := &InputBody{}
 	d := json.NewDecoder(r.Body)
 	dErr := d.Decode(input)
@@ -41,7 +38,7 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request, p *url.Values
 		return
 	}
 	token, err := c.Service.SignIn(input.Login, input.Password)
-	if  err != nil {
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(err.Error()))

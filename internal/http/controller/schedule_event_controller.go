@@ -1,56 +1,38 @@
-package schedule
+package controller
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"scheduler/internal/helpers"
 	"scheduler/internal/model"
 	"scheduler/internal/service"
-	"scheduler/pkg/router"
+	"scheduler/pkg/logger"
 	"strconv"
 )
 
-type Controller struct{
+type ScheduleController struct {
 	ScheduleService service.IScheduleService
-	UserService service.IUserService
+	UserService     service.IUserService
+	Logger          logger.Logger
 }
 
-func NewController(schedule service.IScheduleService, user service.IUserService) *Controller {
-	return &Controller{
+func NewScheduleController(schedule service.IScheduleService, user service.IUserService, logger logger.Logger) *ScheduleController {
+	return &ScheduleController{
 		ScheduleService: schedule,
-		UserService: user,
+		UserService:     user,
+		Logger:          logger,
 	}
 }
 
-func (c Controller) Init(r *router.Router) {
-	r.GET("/schedule-events", c.List)
-	r.GET("/schedule-events/{id}", c.Show)
-	r.POST("/schedule-events", c.Create)
-	r.PUT("/schedule-events/{id}", c.Update)
-	r.DELETE("/schedule-events/{id}", c.Delete)
-	r.URLMiddleware("/schedule-events", []string{
-		"auth", "validation",
-	})
-}
+func (c ScheduleController) List(w http.ResponseWriter, r *http.Request, p *url.Values) {
+	c.Logger.Debugf("ScheduleEventController:List")
 
-func (c Controller) List(w http.ResponseWriter, r *http.Request, p *url.Values) {
-	fmt.Println("ScheduleEventController:List")
-
-	userId, authErr := strconv.Atoi(p.Get(router.AuthorizedUserId))
-	if authErr != nil {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(errors.New("Unauthorized").Error()))
-	}
-	ctx := context.WithValue(context.Background(), "authUserID", userId)
-	authUser, err := c.UserService.Show(ctx, userId)
-	if err != nil {
+	authUser, ctxErr := helpers.GetUserFormContext(r.Context())
+	if ctxErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(ctxErr.Error()))
 		return
 	}
 	params := make(map[string]string)
@@ -59,8 +41,7 @@ func (c Controller) List(w http.ResponseWriter, r *http.Request, p *url.Values) 
 		params["interval"] = interval
 	}
 
-
-	scheduleEvents, sErr := c.ScheduleService.List(ctx, params)
+	scheduleEvents, sErr := c.ScheduleService.List(r.Context(), params)
 	if sErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
@@ -86,26 +67,20 @@ func (c Controller) List(w http.ResponseWriter, r *http.Request, p *url.Values) 
 
 	response, _ := json.Marshal(jsonEvents)
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(response)
+	_, err := w.Write(response)
 	if err != nil {
-		log.Fatal(err)
+		c.Logger.Error(err)
 	}
 }
 
-func (c Controller) Show(w http.ResponseWriter, r *http.Request, p *url.Values) {
-	fmt.Println("ScheduleEventController:Show")
+func (c ScheduleController) Show(w http.ResponseWriter, r *http.Request, p *url.Values) {
+	c.Logger.Debugf("ScheduleEventController:Show")
 
-	userId, authErr := strconv.Atoi(p.Get(router.AuthorizedUserId))
-	if authErr != nil {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(errors.New("Unauthorized").Error()))
-	}
-	ctx := context.WithValue(context.Background(), "authUserID", userId)
-	authUser, err := c.UserService.Show(ctx, userId)
-	if err != nil {
+	authUser, ctxErr := helpers.GetUserFormContext(r.Context())
+	if ctxErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(ctxErr.Error()))
 		return
 	}
 	id, convErr := strconv.Atoi(p.Get("id"))
@@ -116,7 +91,7 @@ func (c Controller) Show(w http.ResponseWriter, r *http.Request, p *url.Values) 
 		return
 	}
 
-	scheduleEvent, sErr := c.ScheduleService.Show(ctx, id)
+	scheduleEvent, sErr := c.ScheduleService.Show(r.Context(), id)
 	if sErr != nil {
 
 		w.WriteHeader(http.StatusNotFound)
@@ -130,30 +105,24 @@ func (c Controller) Show(w http.ResponseWriter, r *http.Request, p *url.Values) 
 	}
 	response, _ := scheduleEvent.Marshal(timezone)
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(response)
+	_, err := w.Write(response)
 	if err != nil {
-		log.Fatal(err)
+		c.Logger.Error(err)
 	}
 }
 
-func (c Controller) Create(w http.ResponseWriter, r *http.Request, p *url.Values) {
-	fmt.Println("ScheduleEventController:Create")
+func (c ScheduleController) Create(w http.ResponseWriter, r *http.Request, p *url.Values) {
+	c.Logger.Debugf("ScheduleEventController:Create")
 
-	userId, authErr := strconv.Atoi(p.Get(router.AuthorizedUserId))
-	if authErr != nil {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(errors.New("Unauthorized").Error()))
-	}
-	ctx := context.WithValue(context.Background(), "authUserID", userId)
-	authUser, err := c.UserService.Show(ctx, userId)
-	if err != nil {
+	authUser, ctxErr := helpers.GetUserFormContext(r.Context())
+	if ctxErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(ctxErr.Error()))
 		return
 	}
 	mJson := model.ScheduleEventJson{}
-	d :=json.NewDecoder(r.Body)
+	d := json.NewDecoder(r.Body)
 	dErr := d.Decode(&mJson)
 	if dErr != nil {
 		response, _ := json.Marshal(dErr)
@@ -176,7 +145,7 @@ func (c Controller) Create(w http.ResponseWriter, r *http.Request, p *url.Values
 		return
 	}
 
-	m, sErr := c.ScheduleService.Create(ctx, m)
+	m, sErr := c.ScheduleService.Create(r.Context(), m)
 	if sErr != nil {
 		response, _ := json.Marshal(dErr)
 		w.Header().Set("Content-Type", "application/json")
@@ -187,26 +156,20 @@ func (c Controller) Create(w http.ResponseWriter, r *http.Request, p *url.Values
 	response, _ := m.Marshal(timezone)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	_, err = w.Write(response)
+	_, err := w.Write(response)
 	if err != nil {
-		log.Fatal(err)
+		c.Logger.Error(err)
 	}
 }
 
-func (c Controller) Update(w http.ResponseWriter, r *http.Request, p *url.Values) {
-	fmt.Println("ScheduleEventController:Update")
+func (c ScheduleController) Update(w http.ResponseWriter, r *http.Request, p *url.Values) {
+	c.Logger.Debugf("ScheduleEventController:Update")
 
-	userId, authErr := strconv.Atoi(p.Get(router.AuthorizedUserId))
-	if authErr != nil {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(errors.New("Unauthorized").Error()))
-	}
-	ctx := context.WithValue(context.Background(), "authUserID", userId)
-	authUser, err := c.UserService.Show(ctx, userId)
-	if err != nil {
+	authUser, ctxErr := helpers.GetUserFormContext(r.Context())
+	if ctxErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(ctxErr.Error()))
 		return
 	}
 	id, convErr := strconv.Atoi(p.Get("id"))
@@ -218,7 +181,7 @@ func (c Controller) Update(w http.ResponseWriter, r *http.Request, p *url.Values
 	}
 
 	mJson := model.ScheduleEventJson{}
-	d :=json.NewDecoder(r.Body)
+	d := json.NewDecoder(r.Body)
 	dErr := d.Decode(&mJson)
 	if dErr != nil {
 		response, _ := json.Marshal(dErr)
@@ -241,7 +204,7 @@ func (c Controller) Update(w http.ResponseWriter, r *http.Request, p *url.Values
 		return
 	}
 
-	m, sErr := c.ScheduleService.Update(ctx, id, m)
+	m, sErr := c.ScheduleService.Update(r.Context(), id, m)
 	if sErr != nil {
 		response, _ := json.Marshal(dErr)
 		w.Header().Set("Content-Type", "application/json")
@@ -251,21 +214,15 @@ func (c Controller) Update(w http.ResponseWriter, r *http.Request, p *url.Values
 
 	response, _ := m.Marshal(timezone)
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(response)
+	_, err := w.Write(response)
 	if err != nil {
-		log.Fatal(err)
+		c.Logger.Error(err)
 	}
 }
 
-func (c Controller) Delete(w http.ResponseWriter, r *http.Request, p *url.Values) {
-	fmt.Println("ScheduleEventController:Delete")
+func (c ScheduleController) Delete(w http.ResponseWriter, r *http.Request, p *url.Values) {
+	c.Logger.Debugf("ScheduleEventController:Delete")
 
-	userId, authErr := strconv.Atoi(p.Get(router.AuthorizedUserId))
-	if authErr != nil {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte(errors.New("Unauthorized").Error()))
-	}
-	ctx := context.WithValue(context.Background(), "authUserID", userId)
 	id, convErr := strconv.Atoi(p.Get("id"))
 	if convErr != nil {
 		response, _ := json.Marshal(convErr)
@@ -274,7 +231,7 @@ func (c Controller) Delete(w http.ResponseWriter, r *http.Request, p *url.Values
 		return
 	}
 
-	sErr := c.ScheduleService.Delete(ctx, id)
+	sErr := c.ScheduleService.Delete(r.Context(), id)
 	if sErr != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "application/json")
@@ -286,6 +243,6 @@ func (c Controller) Delete(w http.ResponseWriter, r *http.Request, p *url.Values
 	w.WriteHeader(http.StatusNoContent)
 	_, err := w.Write(nil)
 	if err != nil {
-		log.Fatal(err)
+		c.Logger.Error(err)
 	}
 }

@@ -26,14 +26,14 @@ type IUserService interface {
 
 type Service struct {
 	Schedule IScheduleService
-	Auth 	 IAuthService
+	Auth     IAuthService
 	User     IUserService
 }
 
 func NewService(schedule IScheduleService, auth IAuthService, user IUserService) *Service {
 	return &Service{
 		Schedule: schedule,
-		Auth: auth,
-		User: user,
+		Auth:     auth,
+		User:     user,
 	}
 }

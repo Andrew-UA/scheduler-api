@@ -146,3 +146,56 @@ func (mr *MockIAuthServiceMockRecorder) SignIn(login, password interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignIn", reflect.TypeOf((*MockIAuthService)(nil).SignIn), login, password)
 }
+
+// MockIUserService is a mock of IUserService interface.
+type MockIUserService struct {
+	ctrl     *gomock.Controller
+	recorder *MockIUserServiceMockRecorder
+}
+
+// MockIUserServiceMockRecorder is the mock recorder for MockIUserService.
+type MockIUserServiceMockRecorder struct {
+	mock *MockIUserService
+}
+
+// NewMockIUserService creates a new mock instance.
+func NewMockIUserService(ctrl *gomock.Controller) *MockIUserService {
+	mock := &MockIUserService{ctrl: ctrl}
+	mock.recorder = &MockIUserServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIUserService) EXPECT() *MockIUserServiceMockRecorder {
+	return m.recorder
+}
+
+// Show mocks base method.
+func (m *MockIUserService) Show(ctx context.Context, ID int) (model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Show", ctx, ID)
+	ret0, _ := ret[0].(model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Show indicates an expected call of Show.
+func (mr *MockIUserServiceMockRecorder) Show(ctx, ID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Show", reflect.TypeOf((*MockIUserService)(nil).Show), ctx, ID)
+}
+
+// Update mocks base method.
+func (m_2 *MockIUserService) Update(ctx context.Context, userID int, m model.User) (model.User, error) {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "Update", ctx, userID, m)
+	ret0, _ := ret[0].(model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockIUserServiceMockRecorder) Update(ctx, userID, m interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIUserService)(nil).Update), ctx, userID, m)
+}
