@@ -2,24 +2,29 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
+	"scheduler/internal/helpers"
 	"scheduler/internal/model"
 	mock_service "scheduler/internal/service/mocks"
+	"scheduler/pkg/logger"
 	"scheduler/pkg/router"
 	"testing"
 	"time"
 )
 
 func TestController_Show(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockIScheduleService, event model.ScheduleEvent)
+	type mockBehavior func(s *mock_service.MockIScheduleService, ctx context.Context, event model.ScheduleEvent)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name               string
 		scheduleEvent      model.ScheduleEvent
+		user               model.User
 		mockBehavior       mockBehavior
 		expectedStatusCode int
 		url                string
@@ -28,13 +33,18 @@ func TestController_Show(t *testing.T) {
 			name: "OK",
 			scheduleEvent: model.ScheduleEvent{
 				ID:      1,
+				UserID:  1,
 				Name:    "Test schedule event",
 				Time:    360,
 				StartAt: 1660694400,
 			},
-			mockBehavior: func(s *mock_service.MockIScheduleService, event model.ScheduleEvent) {
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
+			},
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, event model.ScheduleEvent) {
 				s.EXPECT().
-					Show(event.ID).
+					Show(ctx, event.ID).
 					Return(event, nil)
 			},
 			expectedStatusCode: 200,
@@ -44,13 +54,14 @@ func TestController_Show(t *testing.T) {
 			name: "NOT FOUND",
 			scheduleEvent: model.ScheduleEvent{
 				ID:      1,
+				UserID:  1,
 				Name:    "Test schedule event",
 				Time:    360,
 				StartAt: 1660694400,
 			},
-			mockBehavior: func(s *mock_service.MockIScheduleService, event model.ScheduleEvent) {
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, event model.ScheduleEvent) {
 				s.EXPECT().
-					Show(2).
+					Show(gomock.Any(), 2).
 					Return(event, errors.New("NOT FOUND"))
 			},
 			expectedStatusCode: 404,
@@ -65,10 +76,13 @@ func TestController_Show(t *testing.T) {
 			defer c.Finish()
 
 			service := mock_service.NewMockIScheduleService(c)
-			test.mockBehavior(service, test.scheduleEvent)
+			ctx := helpers.SetUserToContext(test.user, context.Background())
+			test.mockBehavior(service, ctx, test.scheduleEvent)
 			controller := NewController(
 				router.NewRouter(),
-				NewScheduleController(service),
+				nil,
+				NewScheduleController(service, nil, l),
+				nil,
 				nil,
 				nil,
 			)
@@ -81,6 +95,7 @@ func TestController_Show(t *testing.T) {
 				test.url,
 				bytes.NewBufferString(""),
 			)
+			req = req.WithContext(ctx)
 
 			// Make request
 			controller.ServeHTTP(w, req)
@@ -97,11 +112,13 @@ func TestController_Show(t *testing.T) {
 }
 
 func TestController_List(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockIScheduleService, scheduleEvents []model.ScheduleEvent, params map[string]string)
+	type mockBehavior func(s *mock_service.MockIScheduleService, ctx context.Context, scheduleEvents []model.ScheduleEvent, params map[string]string)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name                      string
 		scheduleEvents            []model.ScheduleEvent
+		user                      model.User
 		mockBehavior              mockBehavior
 		expectedStatusCode        int
 		expectScheduleEventsCount int
@@ -128,9 +145,13 @@ func TestController_List(t *testing.T) {
 					UpdatedAt: 1660494400,
 				},
 			},
-			mockBehavior: func(s *mock_service.MockIScheduleService, scheduleEvents []model.ScheduleEvent, params map[string]string) {
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
+			},
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, scheduleEvents []model.ScheduleEvent, params map[string]string) {
 				s.EXPECT().
-					List(params).
+					List(ctx, params).
 					Return(scheduleEvents, nil)
 			},
 			expectedStatusCode:        200,
@@ -150,9 +171,9 @@ func TestController_List(t *testing.T) {
 					UpdatedAt: 1660594400,
 				},
 			},
-			mockBehavior: func(s *mock_service.MockIScheduleService, scheduleEvents []model.ScheduleEvent, params map[string]string) {
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, scheduleEvents []model.ScheduleEvent, params map[string]string) {
 				s.EXPECT().
-					List(params).
+					List(ctx, params).
 					Return(scheduleEvents, nil)
 			},
 			expectedStatusCode:        200,
@@ -170,10 +191,13 @@ func TestController_List(t *testing.T) {
 		defer c.Finish()
 
 		service := mock_service.NewMockIScheduleService(c)
-		test.mockBehavior(service, test.scheduleEvents, test.params)
+		ctx := helpers.SetUserToContext(test.user, context.Background())
+		test.mockBehavior(service, ctx, test.scheduleEvents, test.params)
 		controller := NewController(
 			router.NewRouter(),
-			NewScheduleController(service),
+			nil,
+			NewScheduleController(service, nil, l),
+			nil,
 			nil,
 			nil,
 		)
@@ -186,6 +210,7 @@ func TestController_List(t *testing.T) {
 			test.url,
 			bytes.NewBufferString(""),
 		)
+		req = req.WithContext(ctx)
 
 		// Make request
 		controller.ServeHTTP(w, req)
@@ -199,12 +224,14 @@ func TestController_List(t *testing.T) {
 }
 
 func TestController_Create(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockIScheduleService, scheduleEvent model.ScheduleEvent)
+	type mockBehavior func(s *mock_service.MockIScheduleService, ctx context.Context, scheduleEvent model.ScheduleEvent)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name               string
 		inputBody          string
 		scheduleEvent      model.ScheduleEvent
+		user               model.User
 		mockBehavior       mockBehavior
 		expectedStatusCode int
 	}{
@@ -216,9 +243,13 @@ func TestController_Create(t *testing.T) {
 				Time:    360,
 				StartAt: 1660694400,
 			},
-			mockBehavior: func(s *mock_service.MockIScheduleService, scheduleEvent model.ScheduleEvent) {
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
+			},
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, scheduleEvent model.ScheduleEvent) {
 				s.EXPECT().
-					Create(scheduleEvent).
+					Create(ctx, scheduleEvent).
 					Return(scheduleEvent, nil)
 			},
 			expectedStatusCode: 201,
@@ -232,10 +263,13 @@ func TestController_Create(t *testing.T) {
 			defer c.Finish()
 
 			service := mock_service.NewMockIScheduleService(c)
-			test.mockBehavior(service, test.scheduleEvent)
+			ctx := helpers.SetUserToContext(test.user, context.Background())
+			test.mockBehavior(service, ctx, test.scheduleEvent)
 			controller := NewController(
 				router.NewRouter(),
-				NewScheduleController(service),
+				nil,
+				NewScheduleController(service, nil, l),
+				nil,
 				nil,
 				nil,
 			)
@@ -248,6 +282,7 @@ func TestController_Create(t *testing.T) {
 				"/schedule-events/",
 				bytes.NewBufferString(test.inputBody),
 			)
+			req = req.WithContext(ctx)
 
 			// Make request
 			controller.ServeHTTP(w, req)
@@ -255,7 +290,8 @@ func TestController_Create(t *testing.T) {
 			// Assert
 			m := &model.ScheduleEventJson{}
 			json.Unmarshal(w.Body.Bytes(), m)
-			scheduleEventJson := test.scheduleEvent.ToScheduleEventJson()
+			scheduleEventJson, err := test.scheduleEvent.ToScheduleEventJson("UTC")
+			assert.Nil(t, err)
 			assert.Equal(t, test.expectedStatusCode, w.Code)
 			assert.Equal(t, scheduleEventJson.Time, m.Time)
 			assert.Equal(t, scheduleEventJson.StartAt, m.StartAt)
@@ -266,16 +302,19 @@ func TestController_Create(t *testing.T) {
 func TestController_Update(t *testing.T) {
 	type mockBehavior func(
 		s *mock_service.MockIScheduleService,
+		ctx context.Context,
 		ID int,
 		inputScheduleEvent model.ScheduleEvent,
 		outputScheduleEvent model.ScheduleEvent,
 	)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name                string
 		inputBody           string
 		inputScheduleEvent  model.ScheduleEvent
 		outputScheduleEvent model.ScheduleEvent
+		user                model.User
 		mockBehavior        mockBehavior
 		expectedStatusCode  int
 		url                 string
@@ -294,9 +333,13 @@ func TestController_Update(t *testing.T) {
 				Time:    360,
 				StartAt: 1660694400,
 			},
-			mockBehavior: func(s *mock_service.MockIScheduleService, ID int, iScheduleEvent model.ScheduleEvent, oScheduleEvent model.ScheduleEvent) {
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
+			},
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, ID int, iScheduleEvent model.ScheduleEvent, oScheduleEvent model.ScheduleEvent) {
 				s.EXPECT().
-					Update(ID, iScheduleEvent).
+					Update(ctx, ID, iScheduleEvent).
 					Return(oScheduleEvent, nil)
 			},
 			expectedStatusCode: 200,
@@ -311,10 +354,13 @@ func TestController_Update(t *testing.T) {
 			defer c.Finish()
 
 			service := mock_service.NewMockIScheduleService(c)
-			test.mockBehavior(service, test.outputScheduleEvent.ID, test.inputScheduleEvent, test.outputScheduleEvent)
+			ctx := helpers.SetUserToContext(test.user, context.Background())
+			test.mockBehavior(service, ctx, test.outputScheduleEvent.ID, test.inputScheduleEvent, test.outputScheduleEvent)
 			controller := NewController(
 				router.NewRouter(),
-				NewScheduleController(service),
+				nil,
+				NewScheduleController(service, nil, l),
+				nil,
 				nil,
 				nil,
 			)
@@ -327,6 +373,7 @@ func TestController_Update(t *testing.T) {
 				test.url,
 				bytes.NewBufferString(test.inputBody),
 			)
+			req = req.WithContext(ctx)
 
 			// Make request
 			controller.ServeHTTP(w, req)
@@ -334,7 +381,8 @@ func TestController_Update(t *testing.T) {
 			// Assert
 			m := &model.ScheduleEventJson{}
 			json.Unmarshal(w.Body.Bytes(), m)
-			scheduleEventJson := test.outputScheduleEvent.ToScheduleEventJson()
+			scheduleEventJson, err := test.outputScheduleEvent.ToScheduleEventJson("UTC")
+			assert.Nil(t, err)
 			assert.Equal(t, test.expectedStatusCode, w.Code)
 			assert.Equal(t, scheduleEventJson.Time, m.Time)
 			assert.Equal(t, scheduleEventJson.StartAt, m.StartAt)
@@ -343,19 +391,21 @@ func TestController_Update(t *testing.T) {
 }
 
 func TestController_Delete(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockIScheduleService, ID int)
+	type mockBehavior func(s *mock_service.MockIScheduleService, ctx context.Context, ID int)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name               string
 		mockBehavior       mockBehavior
+		user               model.User
 		expectedStatusCode int
 		url                string
 	}{
 		{
 			name: "OK",
-			mockBehavior: func(s *mock_service.MockIScheduleService, ID int) {
+			mockBehavior: func(s *mock_service.MockIScheduleService, ctx context.Context, ID int) {
 				s.EXPECT().
-					Delete(ID).
+					Delete(ctx, ID).
 					Return(nil)
 			},
 			expectedStatusCode: 204,
@@ -370,10 +420,13 @@ func TestController_Delete(t *testing.T) {
 			defer c.Finish()
 
 			service := mock_service.NewMockIScheduleService(c)
-			test.mockBehavior(service, 1)
+			ctx := helpers.SetUserToContext(test.user, context.Background())
+			test.mockBehavior(service, ctx, 1)
 			controller := NewController(
 				router.NewRouter(),
-				NewScheduleController(service),
+				nil,
+				NewScheduleController(service, nil, l),
+				nil,
 				nil,
 				nil,
 			)
@@ -386,6 +439,7 @@ func TestController_Delete(t *testing.T) {
 				test.url,
 				bytes.NewBufferString(""),
 			)
+			req = req.WithContext(ctx)
 
 			// Make request
 			controller.ServeHTTP(w, req)

@@ -45,8 +45,15 @@ func (c UserController) Update(w http.ResponseWriter, r *http.Request, p *url.Va
 	user, sErr := c.UserService.Update(r.Context(), id, u)
 	if sErr != nil {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(sErr.Error()))
+
+		if sErr.Error() == "sql: no rows in result set" {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("NOT FOUND"))
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(sErr.Error()))
+		}
+
 		return
 	}
 

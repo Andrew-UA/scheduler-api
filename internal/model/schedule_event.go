@@ -9,15 +9,14 @@ const (
 	layout = "01/02/06 15:04:05"
 )
 
-//
 type ScheduleEvent struct {
-	ID        int    `json:"id"`
-	UserID    int    `json:"user_id"`
-	Name      string `json:"name"`
-	Time      int    `json:"time"`
-	StartAt   int64  `json:"start_at"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
+	ID        int    `json:"id" db:"id"`
+	UserID    int    `json:"user_id" db:"user_id"`
+	Name      string `json:"name" db:"name"`
+	Time      int    `json:"time" db:"time"`
+	StartAt   int64  `json:"start_at" db:"start_at"`
+	CreatedAt int64  `json:"created_at" db:"created_at"`
+	UpdatedAt int64  `json:"updated_at" db:"updated_at"`
 }
 
 type ScheduleEventJson struct {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"scheduler/pkg/router"
@@ -62,6 +63,15 @@ func NewController(
 }
 
 func (c Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Remote addr: ", r.RemoteAddr)
+	if r.Method == http.MethodOptions {
+		w.Header().Add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
+		w.Header().Add("Access-Control-Allow-Headers", "*")
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	handleMethod, err := c.Router.GetHandleFunctionByRoute(strings.ToUpper(r.Method), r.RequestURI)
 	if err != nil {
 		w.WriteHeader(404)
@@ -74,32 +84,41 @@ func (c Controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) Init() {
 	// Register middleware
-	c.Router.RegisterMiddleware(c.Middleware.GetList())
+	if c.Middleware != nil {
+		c.Router.RegisterMiddleware(c.Middleware.GetList())
+	}
 
 	// Register routes
 	// SCHEDULE EVENTS
-	c.Router.GET("/schedule-events", c.ScheduleEventController.List)
-	c.Router.GET("/schedule-events/{id}", c.ScheduleEventController.Show)
-	c.Router.POST("/schedule-events", c.ScheduleEventController.Create)
-	c.Router.PUT("/schedule-events/{id}", c.ScheduleEventController.Update)
-	c.Router.DELETE("/schedule-events/{id}", c.ScheduleEventController.Delete)
-	c.Router.URLMiddleware("/schedule-events", []string{
-		"metrics", "auth", "validation",
-	})
+	if c.ScheduleEventController != nil {
+		c.Router.GET("/schedule-events", c.ScheduleEventController.List)
+		c.Router.GET("/schedule-events/{id}", c.ScheduleEventController.Show)
+		c.Router.POST("/schedule-events", c.ScheduleEventController.Create)
+		c.Router.PUT("/schedule-events/{id}", c.ScheduleEventController.Update)
+		c.Router.DELETE("/schedule-events/{id}", c.ScheduleEventController.Delete)
+		c.Router.URLMiddleware("/schedule-events", []string{
+			"metrics", "auth", "validation",
+		})
+	}
 
 	// USERS
-	c.Router.PUT("/users/{id}", c.UserController.Update)
-	c.Router.URLMiddleware("/users", []string{
-		"metrics", "auth",
-	})
+	if c.UserController != nil {
+		c.Router.PUT("/users/{id}", c.UserController.Update)
+		c.Router.URLMiddleware("/users", []string{
+			"metrics", "auth",
+		})
+	}
 
 	// AUTH
-	c.Router.POST("/login", c.AuthController.Login)
-	c.Router.URLMiddleware("/login", []string{
-		"metrics",
-	})
+	if c.AuthController != nil {
+		c.Router.POST("/login", c.AuthController.Login)
+		c.Router.URLMiddleware("/login", []string{
+			"metrics",
+		})
+	}
 
 	// METRICS
-	c.Router.GET("/metrics", c.MetricController.List)
-
+	if c.MetricController != nil {
+		c.Router.GET("/metrics", c.MetricController.List)
+	}
 }

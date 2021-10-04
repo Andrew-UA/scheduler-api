@@ -8,7 +8,7 @@ import (
 
 type ISchedule interface {
 	List(params map[string]string) ([]model.ScheduleEvent, error)
-	Show(D int) (model.ScheduleEvent, error)
+	Show(ID int) (model.ScheduleEvent, error)
 	Create(m model.ScheduleEvent) (model.ScheduleEvent, error)
 	Update(ID int, m model.ScheduleEvent) (model.ScheduleEvent, error)
 	Delete(ID int) error

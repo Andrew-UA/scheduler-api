@@ -21,7 +21,7 @@ var once sync.Once
 
 type metricsService struct {
 	metrics []Metric
-	mu sync.RWMutex
+	mu      sync.RWMutex
 }
 
 func GetMetricsServiceInstance() MetricsService {
@@ -35,10 +35,10 @@ func GetMetricsServiceInstance() MetricsService {
 func (m *metricsService) Add(metric Metric) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.metrics =  append(m.metrics, metric)
+	m.metrics = append(m.metrics, metric)
 }
 
-func (m *metricsService) List() []Metric  {
+func (m *metricsService) List() []Metric {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

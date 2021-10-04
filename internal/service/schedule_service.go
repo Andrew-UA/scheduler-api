@@ -10,13 +10,13 @@ import (
 )
 
 type ScheduleService struct {
-	Repo repository.ISchedule
+	Repo   repository.ISchedule
 	Logger logger.Logger
 }
 
 func NewScheduleService(repo repository.ISchedule, logger logger.Logger) *ScheduleService {
 	return &ScheduleService{
-		Repo: repo,
+		Repo:   repo,
 		Logger: logger,
 	}
 }

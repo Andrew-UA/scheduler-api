@@ -45,6 +45,11 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request, p *url.Va
 		return
 	}
 
+	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
+	w.Header().Add("Access-Control-Allow-Headers", "*")
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
 	w.Write([]byte(token))
 }

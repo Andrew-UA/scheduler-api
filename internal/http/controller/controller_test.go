@@ -17,7 +17,7 @@ func TestController_BedURL(t *testing.T) {
 		url                string
 	}{
 		{
-			name: "OK",
+			name:               "OK",
 			expectedStatusCode: 404,
 			url:                "/schedule-events/",
 		},
@@ -32,7 +32,9 @@ func TestController_BedURL(t *testing.T) {
 			service := mock_service.NewMockIScheduleService(c)
 			controller := NewController(
 				router.NewRouter(),
-				NewScheduleController(service),
+				nil,
+				NewScheduleController(service, nil, nil),
+				nil,
 				nil,
 				nil,
 			)

@@ -1,30 +1,40 @@
 package service
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"scheduler/internal/helpers"
 	"scheduler/internal/model"
 	mock_repository "scheduler/internal/repository/mocks"
+	"scheduler/pkg/logger"
 	"testing"
 )
 
 func TestService_Show(t *testing.T) {
 	type mockBehavior func(s *mock_repository.MockISchedule, scheduleEvent model.ScheduleEvent, ID int)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name          string
 		scheduleEvent model.ScheduleEvent
+		user          model.User
 		mockBehavior  mockBehavior
 	}{
 		{
 			name: "OK",
 			scheduleEvent: model.ScheduleEvent{
 				1,
+				1,
 				"Test Schedule event",
 				360,
 				1660794400,
 				1660494400,
 				1660494400,
+			},
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
 			},
 			mockBehavior: func(s *mock_repository.MockISchedule, scheduleEvent model.ScheduleEvent, ID int) {
 				s.EXPECT().Show(ID).Return(scheduleEvent, nil)
@@ -38,11 +48,12 @@ func TestService_Show(t *testing.T) {
 		defer c.Finish()
 
 		repo := mock_repository.NewMockISchedule(c)
+		ctx := helpers.SetUserToContext(test.user, context.Background())
 		test.mockBehavior(repo, test.scheduleEvent, test.scheduleEvent.ID)
-		service := service2.NewScheduleService(repo)
+		service := NewScheduleService(repo, l)
 
 		// Test
-		result, err := service.Show(test.scheduleEvent.ID)
+		result, err := service.Show(ctx, test.scheduleEvent.ID)
 
 		// Assert
 		assert.Equal(t, test.scheduleEvent, result)
@@ -52,10 +63,12 @@ func TestService_Show(t *testing.T) {
 
 func TestService_List(t *testing.T) {
 	type mockBehavior func(s *mock_repository.MockISchedule, scheduleEvents []model.ScheduleEvent, params map[string]string)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name           string
 		scheduleEvents []model.ScheduleEvent
+		user           model.User
 		mockBehavior   mockBehavior
 		params         map[string]string
 	}{
@@ -63,6 +76,7 @@ func TestService_List(t *testing.T) {
 			name: "OK",
 			scheduleEvents: []model.ScheduleEvent{
 				{
+					1,
 					1,
 					"First schedule event",
 					360,
@@ -72,12 +86,17 @@ func TestService_List(t *testing.T) {
 				},
 				{
 					2,
+					1,
 					"Second schedule event",
 					360,
 					1660794400,
 					1660494400,
 					1660494400,
 				},
+			},
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
 			},
 			mockBehavior: func(s *mock_repository.MockISchedule, scheduleEvents []model.ScheduleEvent, params map[string]string) {
 				s.EXPECT().List(params).Return(scheduleEvents, nil)
@@ -92,11 +111,12 @@ func TestService_List(t *testing.T) {
 		defer c.Finish()
 
 		repo := mock_repository.NewMockISchedule(c)
+		ctx := helpers.SetUserToContext(test.user, context.Background())
 		test.mockBehavior(repo, test.scheduleEvents, test.params)
-		service := service2.NewScheduleService(repo)
+		service := NewScheduleService(repo, l)
 
 		// Test
-		result, err := service.List(test.params)
+		result, err := service.List(ctx, test.params)
 
 		// Assert
 		assert.Equal(t, test.scheduleEvents, result)
@@ -106,11 +126,13 @@ func TestService_List(t *testing.T) {
 
 func TestService_Create(t *testing.T) {
 	type mockBehavior func(s *mock_repository.MockISchedule, inputScheduleEvents model.ScheduleEvent, outputScheduleEvents model.ScheduleEvent)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name                string
 		inputScheduleEvent  model.ScheduleEvent
 		outputScheduleEvent model.ScheduleEvent
+		user                model.User
 		mockBehavior        mockBehavior
 		params              map[string]string
 	}{
@@ -118,6 +140,7 @@ func TestService_Create(t *testing.T) {
 			name: "OK",
 			inputScheduleEvent: model.ScheduleEvent{
 				0,
+				1,
 				"Schedule event",
 				360,
 				1660794400,
@@ -126,11 +149,16 @@ func TestService_Create(t *testing.T) {
 			},
 			outputScheduleEvent: model.ScheduleEvent{
 				1,
+				1,
 				"Schedule event",
 				360,
 				1660794400,
 				1660494400,
 				1660494400,
+			},
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
 			},
 			mockBehavior: func(s *mock_repository.MockISchedule, inputScheduleEvents model.ScheduleEvent, outputScheduleEvents model.ScheduleEvent) {
 				s.EXPECT().Create(inputScheduleEvents).Return(outputScheduleEvents, nil)
@@ -145,11 +173,12 @@ func TestService_Create(t *testing.T) {
 		defer c.Finish()
 
 		repo := mock_repository.NewMockISchedule(c)
+		ctx := helpers.SetUserToContext(test.user, context.Background())
 		test.mockBehavior(repo, test.inputScheduleEvent, test.outputScheduleEvent)
-		service := service2.NewScheduleService(repo)
+		service := NewScheduleService(repo, l)
 
 		// Test
-		result, err := service.Create(test.inputScheduleEvent)
+		result, err := service.Create(ctx, test.inputScheduleEvent)
 
 		// Assert
 		assert.Equal(t, test.outputScheduleEvent, result)
@@ -159,11 +188,13 @@ func TestService_Create(t *testing.T) {
 
 func TestService_Update(t *testing.T) {
 	type mockBehavior func(s *mock_repository.MockISchedule, ID int, inputScheduleEvents model.ScheduleEvent, outputScheduleEvents model.ScheduleEvent)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name                string
 		inputScheduleEvent  model.ScheduleEvent
 		outputScheduleEvent model.ScheduleEvent
+		user                model.User
 		mockBehavior        mockBehavior
 		params              map[string]string
 	}{
@@ -171,6 +202,7 @@ func TestService_Update(t *testing.T) {
 			name: "OK",
 			inputScheduleEvent: model.ScheduleEvent{
 				0,
+				1,
 				"Schedule event",
 				360,
 				1660794400,
@@ -179,11 +211,16 @@ func TestService_Update(t *testing.T) {
 			},
 			outputScheduleEvent: model.ScheduleEvent{
 				1,
+				1,
 				"Schedule event",
 				360,
 				1660794400,
 				1660494400,
 				1660494400,
+			},
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
 			},
 			mockBehavior: func(
 				s *mock_repository.MockISchedule,
@@ -205,11 +242,12 @@ func TestService_Update(t *testing.T) {
 		defer c.Finish()
 
 		repo := mock_repository.NewMockISchedule(c)
+		ctx := helpers.SetUserToContext(test.user, context.Background())
 		test.mockBehavior(repo, test.outputScheduleEvent.ID, test.inputScheduleEvent, test.outputScheduleEvent)
-		service := service2.NewScheduleService(repo)
+		service := NewScheduleService(repo, l)
 
 		// Test
-		result, err := service.Update(test.outputScheduleEvent.ID, test.inputScheduleEvent)
+		result, err := service.Update(ctx, test.outputScheduleEvent.ID, test.inputScheduleEvent)
 
 		// Assert
 		assert.Equal(t, test.outputScheduleEvent, result)
@@ -219,16 +257,22 @@ func TestService_Update(t *testing.T) {
 
 func TestService_Delete(t *testing.T) {
 	type mockBehavior func(s *mock_repository.MockISchedule, ID int)
+	l := logger.LoggerMock{}
 
 	testTable := []struct {
 		name         string
 		inputId      int
+		user         model.User
 		mockBehavior mockBehavior
 		params       map[string]string
 	}{
 		{
 			name:    "OK",
 			inputId: 1,
+			user: model.User{
+				ID:       1,
+				Timezone: "UTC",
+			},
 			mockBehavior: func(s *mock_repository.MockISchedule, ID int) {
 				s.EXPECT().
 					Delete(ID).
@@ -244,11 +288,12 @@ func TestService_Delete(t *testing.T) {
 		defer c.Finish()
 
 		repo := mock_repository.NewMockISchedule(c)
+		ctx := helpers.SetUserToContext(test.user, context.Background())
 		test.mockBehavior(repo, test.inputId)
-		service := service2.NewScheduleService(repo)
+		service := NewScheduleService(repo, l)
 
 		// Test
-		err := service.Delete(test.inputId)
+		err := service.Delete(ctx, test.inputId)
 
 		// Assert
 		assert.Nil(t, err)

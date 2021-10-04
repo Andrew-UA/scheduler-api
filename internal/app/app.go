@@ -3,27 +3,31 @@ package app
 import (
 	"context"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"os"
 	"os/signal"
 	"scheduler/internal/http/controller"
-	"scheduler/internal/model"
 	"scheduler/internal/repository"
-	"scheduler/internal/repository/slc"
+	"scheduler/internal/repository/postgres"
 	"scheduler/internal/server"
 	"scheduler/internal/service"
-	"scheduler/pkg/auth"
 	"scheduler/pkg/router"
 	"syscall"
-	"time"
 )
 
+// Run initialize application
 func Run() {
 	// Dependency injection
 	// Logger
 	loggerService := logrus.New()
 	loggerService.SetLevel(logrus.DebugLevel)
+
+	/*if err := initConfig(); err != nil {
+		loggerService.Fatalf("Error init config: %s", err.Error())
+	}*/
+
 	// DB
-	pass, _ := auth.NewPasswordManager().HashAndSalt("password")
+	/*pass, _ := auth.NewPasswordManager().HashAndSalt("password")
 	var db = &slc.DB{
 		ScheduleIncrement: 2,
 		Schedules: []model.ScheduleEvent{
@@ -54,11 +58,28 @@ func Run() {
 				Timezone: "Europe/Kiev",
 			},
 		},
-	}
+	}*/
 	// Repo
-	scheduleRepo := slc.NewSchedules(db)
-	userRepo := slc.NewUsers(db)
-	r := repository.NewRepository(scheduleRepo, userRepo)
+	//scheduleRepo := slc.NewSchedules(db)
+	//userRepo := slc.NewUsers(db)
+
+	cfgPostgres := postgres.ConfigPostgres{
+		//"localhost",
+		"fullstack-postgres",
+		"5432",
+		"postgres",
+		"password",
+		"postgres",
+		"disable",
+	}
+	pdb, err := postgres.NewPostgresDB(cfgPostgres)
+	if err != nil {
+		loggerService.Fatalf("!!!!!!DB is not connected: %s", err.Error())
+	}
+	postgresScheduleRepo := postgres.NewScheduleRepo(pdb)
+	userRepo := postgres.NewUserRepo(pdb)
+
+	r := repository.NewRepository(postgresScheduleRepo, userRepo)
 
 	// ScheduleService
 	scheduleService := service.NewScheduleService(r.Schedule, loggerService)
@@ -103,8 +124,15 @@ func Run() {
 	defer shutdown()
 
 	if err := srv.Stop(ctx); err != nil {
-		loggerService.Fatalf("Failed to stop HTTP server: %w", err)
+		loggerService.Fatalf("Failed to stop HTTP server: %s", err)
 	}
 
 	// TODO: DISCONNECT FROM DB
+}
+
+func initConfig() error {
+	viper.AddConfigPath("configs")
+	viper.SetConfigName("config")
+	//viper.
+	return viper.ReadInConfig()
 }
